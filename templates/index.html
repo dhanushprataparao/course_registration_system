@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Course Registration & Prerequisite Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f0f5fa',
+                            100: '#e2ebf4',
+                            200: '#c5d7e9',
+                            300: '#99bcda',
+                            400: '#679dc6',
+                            500: '#4380b0',
+                            600: '#326693',
+                            700: '#295277',
+                            800: '#254564',
+                            900: '#0f172a',
+                            950: '#0a0f1d'
+                        },
+                        indigo: {
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Vis.js Network for DAG visualization -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="h-full font-sans text-slate-800 antialiased flex flex-col md:flex-row overflow-hidden bg-slate-50">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 z-30">
+        <div class="flex items-center space-x-2">
+            <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm font-bold text-lg">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold text-slate-900 leading-tight">EduPrereq</h1>
+                <p class="text-xs text-slate-500">Course & Prerequisite Portal</p>
+            </div>
+        </div>
+        <button id="mobileMenuBtn" class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col flex-shrink-0 border-r border-slate-800">
+        <!-- Logo & Header -->
+        <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md font-bold">
+                    <i data-lucide="git-merge" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-1.5">
+                        EduPrereq
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-mono border border-indigo-500/30">DAG</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">Prerequisite Management</p>
+                </div>
+            </div>
+            <button id="closeMobileMenuBtn" class="md:hidden text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Academic Badge -->
+        <div class="px-4 py-2.5 mx-3 mt-3 rounded-lg bg-slate-800/60 border border-slate-700/50 flex items-center justify-between text-xs">
+            <span class="text-slate-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Term: Fall 2026-27
+            </span>
+            <span class="text-indigo-300 font-medium font-mono text-[11px]">B.Tech CSE</span>
+        </div>
+
+        <!-- Nav Links -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <button class="nav-item active w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="dashboard">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                <span>Student Dashboard</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="catalog">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span>Course Catalog</span>
+                <span id="navCatalogCount" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">8</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="my-courses">
+                <i data-lucide="bookmark-check" class="w-4 h-4"></i>
+                <span>My Courses</span>
+                <span id="navMyCoursesBadge" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-medium">1 Reg</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="prereq-checker">
+                <i data-lucide="check-check" class="w-4 h-4"></i>
+                <span>Prerequisite Checker</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="graph-visualizer">
+                <i data-lucide="network" class="w-4 h-4"></i>
+                <span>Dependency Graph</span>
+                <span class="ml-auto text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Interactive</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="sequence-planner">
+                <i data-lucide="list-ordered" class="w-4 h-4"></i>
+                <span>Sequence Planner</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="discrete-math">
+                <i data-lucide="binary" class="w-4 h-4"></i>
+                <span>Discrete Math Lab</span>
+                <span class="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">Poset</span>
+            </button>
+
+            <button class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors" data-tab="student-profile">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+                <span>Student Profile</span>
+            </button>
+        </nav>
+
+        <!-- Persona Switcher (For Presentation & Demo) -->
+        <div class="p-3 border-t border-slate-800 bg-slate-950/60">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Demo Persona</span>
+                <button id="resetDemoBtn" title="Reset Demo Data" class="text-[11px] text-slate-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    Reset
+                </button>
+            </div>
+            <select id="personaSelector" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+                <option value="sophomore">Prataparao Dhanush (Sophomore - C1 Done)</option>
+                <option value="freshman">Priya Nair (Freshman - No Prereqs)</option>
+                <option value="junior">Devin Chen (Junior - C1+C2 Done)</option>
+                <option value="senior">Aisha Patel (Senior - C1-C5 Done)</option>
+            </select>
+        </div>
+
+        <!-- Student Profile Footer Card in Sidebar -->
+        <div class="p-3.5 border-t border-slate-800/80 bg-slate-900/90 flex items-center space-x-3">
+            <img id="sidebarStudentAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&q=80" alt="Avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500/50">
+            <div class="flex-1 min-w-0">
+                <p id="sidebarStudentName" class="text-xs font-semibold text-white truncate">Prataparao Dhanush</p>
+                <p id="sidebarStudentRoll" class="text-[11px] text-slate-400 font-mono truncate">CS24B042 • Sem 3</p>
+            </div>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" title="Active Session"></div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+
+        <!-- Top Navigation Bar -->
+        <header class="h-16 bg-white border-b border-slate-200/80 px-4 md:px-8 flex items-center justify-between flex-shrink-0 z-20">
+            <!-- Search Field -->
+            <div class="relative w-full max-w-md hidden sm:block">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="globalCourseSearch" placeholder="Search courses (e.g., C2, Data Structures, DBMS)..." 
+                       class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono">⌘K</span>
+            </div>
+
+            <!-- Top Right Badges & Controls -->
+            <div class="flex items-center space-x-3 ml-auto">
+                <!-- Academic Status Badge -->
+                <div class="hidden lg:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-medium">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>Topological Sorting Active</span>
+                </div>
+
+                <!-- Notifications Dropdown -->
+                <div class="relative">
+                    <button id="notificationBtn" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors relative">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                    </button>
+                    <!-- Notification Flyout -->
+                    <div id="notificationMenu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">System Alerts</span>
+                            <span class="text-[11px] text-indigo-600 font-semibold cursor-pointer">Mark read</span>
+                        </div>
+                        <div class="divide-y divide-slate-100 text-xs">
+                            <div class="p-3 hover:bg-slate-50 transition-colors flex space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-slate-800">Prerequisite Verified</p>
+                                    <p class="text-slate-500 text-[11px]">C1 completed. You are eligible for C2 Data Structures.</p>
+                                    <span class="text-[10px] text-slate-400">Just now</span>
+                                </div>
+                            </div>
+                            <div class="p-3 hover:bg-slate-50 transition-colors flex space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-slate-800">Registration Window Open</p>
+                                    <p class="text-slate-500 text-[11px]">Fall 2026 course registration deadline in 14 days.</p>
+                                    <span class="text-[10px] text-slate-400">Today, 09:00 AM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Profile Pill -->
+                <div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+                    <img id="topBarAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&q=80" alt="Avatar" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/20">
+                    <div class="hidden sm:block text-left">
+                        <p id="topBarName" class="text-xs font-semibold text-slate-800 leading-tight">Prataparao Dhanush</p>
+                        <p id="topBarRole" class="text-[11px] text-slate-500">Sophomore • CSE</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Tab Content Body (Scrollable) -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 space-y-6">
+
+            <!-- ==================== TAB 1: STUDENT DASHBOARD ==================== -->
+            <section id="tab-dashboard" class="tab-pane space-y-6">
+                <!-- Welcome Banner -->
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 md:p-8 shadow-sm">
+                    <div class="relative z-10 max-w-2xl">
+                        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-medium mb-3">
+                            <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                            <span>Academic Year 2026-2027</span>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">
+                            Welcome back, <span id="dashWelcomeName" class="text-indigo-400">Alex</span>!
+                        </h2>
+                        <p class="text-sm md:text-base text-slate-300 mt-2 leading-relaxed">
+                            Your course prerequisite roadmap has been calculated using Directed Acyclic Graph (DAG) topological sorting. You are eligible to register for new courses!
+                        </p>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <button onclick="switchTab('catalog')" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all shadow-sm hover:shadow">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>Register Eligible Courses</span>
+                            </button>
+                            <button onclick="switchTab('graph-visualizer')" class="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white border border-white/15 px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all backdrop-blur-sm">
+                                <i data-lucide="network" class="w-4 h-4"></i>
+                                <span>Inspect Prerequisite Graph</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Decorative subtle graph background illustration -->
+                    <div class="absolute -right-10 -bottom-10 w-80 h-80 opacity-10 pointer-events-none">
+                        <i data-lucide="git-merge" class="w-full h-full text-indigo-300"></i>
+                    </div>
+                </div>
+
+                <!-- Summary Cards Row -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                    <!-- Total Courses -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Curriculum</span>
+                            <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                                <i data-lucide="layers" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="statTotalCourses" class="text-2xl md:text-3xl font-extrabold text-slate-900">8</span>
+                            <span class="text-xs text-slate-400">Courses (28 Cr)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">Computer Science Core</p>
+                    </div>
+
+                    <!-- Completed Courses -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Completed</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="statCompletedCourses" class="text-2xl md:text-3xl font-extrabold text-emerald-600">1</span>
+                            <span id="statCompletedCredits" class="text-xs text-slate-400 font-medium">(4 Credits)</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                            <i data-lucide="award" class="w-3 h-3"></i> Prereqs Unlocked
+                        </p>
+                    </div>
+
+                    <!-- Eligible Courses -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Eligible Now</span>
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                <i data-lucide="unlock" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="statEligibleCourses" class="text-2xl md:text-3xl font-extrabold text-indigo-600">1</span>
+                            <span class="text-xs text-indigo-500 font-medium">Ready</span>
+                        </div>
+                        <p class="text-[11px] text-indigo-600 font-medium mt-1">All prerequisites satisfied</p>
+                    </div>
+
+                    <!-- Pending Prerequisites / Blocked -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Locked / Pending</span>
+                            <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline space-x-2">
+                            <span id="statBlockedCourses" class="text-2xl md:text-3xl font-extrabold text-rose-600">6</span>
+                            <span class="text-xs text-slate-400">Courses</span>
+                        </div>
+                        <p class="text-[11px] text-rose-600 font-medium mt-1">Require prior courses</p>
+                    </div>
+                </div>
+
+                <!-- Degree Progress Bar Card -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Degree Curriculum Progress</h3>
+                            <p class="text-xs text-slate-500">Track completed credits toward graduation requirements</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <span id="progressCreditsText" class="text-sm font-bold text-slate-900">4 / 28 Credits</span>
+                                <span class="text-xs text-slate-500 block">Required for Degree</span>
+                            </div>
+                            <span id="progressPercentBadge" class="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-bold font-mono">
+                                14.3%
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Progress Bar Track -->
+                    <div class="w-full bg-slate-100 rounded-full h-3.5 p-0.5 overflow-hidden border border-slate-200">
+                        <div id="progressBarFill" class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-700 ease-out" style="width: 14.3%"></div>
+                    </div>
+                    <!-- Mini Stage Indicators -->
+                    <div class="grid grid-cols-4 gap-2 mt-3 text-center text-[11px] text-slate-500">
+                        <div class="p-1 rounded bg-slate-50 border border-slate-200/60 font-medium">Stage 1: Foundation (C1)</div>
+                        <div class="p-1 rounded bg-slate-50 border border-slate-200/60 font-medium">Stage 2: Core (C2)</div>
+                        <div class="p-1 rounded bg-slate-50 border border-slate-200/60 font-medium">Stage 3: Systems (C3, C4, C5)</div>
+                        <div class="p-1 rounded bg-slate-50 border border-slate-200/60 font-medium">Stage 4: Advanced (C6, C7, C8)</div>
+                    </div>
+                </div>
+
+                <!-- Recently Added / Recommended & Prerequisite Alert Banner -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recently Added & Eligible Quick Cards (2 Columns) -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Recently Recommended for You</h3>
+                                <p class="text-xs text-slate-500">Courses unlocked by your completed prerequisites</p>
+                            </div>
+                            <button onclick="switchTab('catalog')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                View Full Catalog <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div id="dashboardRecommendedList" class="space-y-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Discrete Math Concept Highlight (1 Column) -->
+                    <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 flex items-center justify-center mb-4">
+                                <i data-lucide="git-commit" class="w-5 h-5"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-white">Discrete Math Engine</h3>
+                            <p class="text-xs text-indigo-200/80 mt-2 leading-relaxed">
+                                This portal models prerequisites as a <strong class="text-white">Strict Partial Order $(V, \prec)$</strong> on a Directed Acyclic Graph (DAG).
+                            </p>
+                            <ul class="mt-4 space-y-2 text-xs text-slate-300">
+                                <li class="flex items-center gap-2">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                    <span><strong>Irreflexive:</strong> No course prerequisites itself</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                    <span><strong>Asymmetric:</strong> Cycles strictly disallowed</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                    <span><strong>Transitive:</strong> Direct & indirect prereqs</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/10">
+                            <button onclick="switchTab('discrete-math')" class="w-full py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl text-center transition-colors">
+                                Open Discrete Math Lab →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 2: COURSE CATALOG ==================== -->
+            <section id="tab-catalog" class="tab-pane hidden space-y-6">
+                <!-- Catalog Header & Controls -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Academic Course Catalog</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Explore curriculum courses, inspect prerequisite chains, and register for eligible courses.</p>
+                        </div>
+                        <!-- View Toggle (Grid / Table) -->
+                        <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto border border-slate-200">
+                            <button id="viewGridBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-800 shadow-sm flex items-center gap-1.5 transition-all">
+                                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                                Grid
+                            </button>
+                            <button id="viewTableBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1.5 transition-all">
+                                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                                Table
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Search Toolbar -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2">
+                        <!-- Search Box -->
+                        <div class="md:col-span-5 relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="catalogSearchInput" placeholder="Filter by course code or title..." 
+                                   class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                        </div>
+
+                        <!-- Eligibility Filter Dropdown / Pills -->
+                        <div class="md:col-span-4 flex items-center space-x-2">
+                            <label class="text-xs text-slate-500 font-medium whitespace-nowrap">Filter Status:</label>
+                            <select id="catalogStatusFilter" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600">
+                                <option value="ALL">All Statuses (8 Courses)</option>
+                                <option value="ELIGIBLE">Eligible Only (Green)</option>
+                                <option value="BLOCKED">Prerequisite Required (Red)</option>
+                                <option value="REGISTERED">Registered (Indigo)</option>
+                                <option value="COMPLETED">Completed (Slate)</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By -->
+                        <div class="md:col-span-3 flex items-center space-x-2">
+                            <label class="text-xs text-slate-500 font-medium whitespace-nowrap">Sort:</label>
+                            <select id="catalogSortBy" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600">
+                                <option value="code_asc">Course Code (C1 - C8)</option>
+                                <option value="name_asc">Course Name (A-Z)</option>
+                                <option value="credits_desc">Credits (High to Low)</option>
+                                <option value="level_asc">Curriculum Level</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid View Container -->
+                <div id="catalogGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Table View Container (Hidden by default) -->
+                <div id="catalogTableContainer" class="hidden bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-3.5">Code & Name</th>
+                                    <th class="px-4 py-3.5">Credits</th>
+                                    <th class="px-4 py-3.5">Prerequisites</th>
+                                    <th class="px-4 py-3.5">Eligibility Status</th>
+                                    <th class="px-5 py-3.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="catalogTableBody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="catalogEmptyState" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-sm">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                        <i data-lucide="filter-x" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-800">No courses match your filter</h3>
+                    <p class="text-xs text-slate-500 mt-1">Try resetting the status filter or clearing your search query.</p>
+                    <button onclick="resetCatalogFilters()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors">
+                        Reset Filters
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 3: PREREQUISITE CHECKER ==================== -->
+            <section id="tab-prereq-checker" class="tab-pane hidden space-y-6">
+                <!-- Checker Header Card -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+                    <div class="max-w-2xl">
+                        <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-semibold border border-indigo-100 mb-2">
+                            <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+                            Verification Engine
+                        </span>
+                        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Interactive Prerequisite Checker</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Select any course from the curriculum to inspect immediate prerequisites, transitive dependency ancestors, and your current eligibility status.
+                        </p>
+                    </div>
+
+                    <!-- Course Selector Control -->
+                    <div class="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="relative flex-1">
+                            <label for="checkerCourseSelect" class="block text-xs font-medium text-slate-600 mb-1">Select Course to Verify:</label>
+                            <select id="checkerCourseSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 cursor-pointer">
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+                        <div class="sm:self-end">
+                            <button id="runCheckBtn" class="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs md:text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2">
+                                <i data-lucide="scan-line" class="w-4 h-4"></i>
+                                <span>Verify Prerequisites</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checker Result Section (Card) -->
+                <div id="checkerResultCard" class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                    <!-- Status Banner with Icon and Message -->
+                    <div id="checkerStatusBanner" class="p-4 md:p-5 rounded-2xl flex items-start space-x-4 border transition-all">
+                        <div id="checkerStatusIconBox" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold">
+                            <!-- Injected via JS -->
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h3 id="checkerCourseTitle" class="text-base font-bold text-slate-900">Data Structures (C2)</h3>
+                                <span id="checkerStatusBadge" class="text-xs px-2.5 py-1 rounded-full font-bold">ELIGIBLE</span>
+                            </div>
+                            <p id="checkerStatusMessage" class="text-xs md:text-sm mt-1 text-slate-600 font-medium leading-relaxed">
+                                You are eligible to register for Data Structures. All prerequisites have been successfully completed!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown: Satisfied vs Missing Prerequisites -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Completed Prerequisites Box -->
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                                    <span>Satisfied Prerequisites</span>
+                                </h4>
+                                <span id="checkerSatisfiedCount" class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">1 Completed</span>
+                            </div>
+                            <div id="checkerSatisfiedList" class="space-y-2 text-xs">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Missing Prerequisites Box -->
+                        <div class="rounded-xl border border-rose-200 bg-rose-50/40 p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+                                    <span>Missing Prerequisites</span>
+                                </h4>
+                                <span id="checkerMissingCount" class="text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">0 Missing</span>
+                            </div>
+                            <div id="checkerMissingList" class="space-y-2 text-xs">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transitive Ancestor Chain (Discrete Math View) -->
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="git-branch" class="w-4 h-4 text-indigo-600"></i>
+                                <span>Complete Dependency Chain (Transitive Closure)</span>
+                            </h4>
+                            <span class="text-[11px] text-slate-500 font-mono">Partial Order Path</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Shows all direct and indirect ancestors required to take this course in the curriculum DAG:
+                        </p>
+                        <div id="checkerAncestorChain" class="flex flex-wrap items-center gap-2 pt-1">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Registration Action from Checker -->
+                    <div id="checkerActionRow" class="pt-2 flex items-center justify-between">
+                        <span class="text-xs text-slate-500">Ready to take this course?</span>
+                        <div id="checkerActionButtons">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 4: DEPENDENCY GRAPH VISUALIZER ==================== -->
+            <section id="tab-graph-visualizer" class="tab-pane hidden space-y-6">
+                <!-- Visualizer Controls & Header -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">DIRECTED ACYCLIC GRAPH</span>
+                                <span class="text-xs text-slate-400">•</span>
+                                <span class="text-xs text-slate-500">Kahn's Topological Sorting</span>
+                            </div>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight mt-1">Course Dependency Visualizer</h2>
+                            <p class="text-xs text-slate-500">
+                                Interactive visual graph showing prerequisite flows ($u \to v$ means $u$ must precede $v$). Drag nodes, zoom in/out, or click any node to highlight dependencies!
+                            </p>
+                        </div>
+                        <!-- Graph Toolbar Buttons -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="graphResetZoomBtn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                                <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                                Reset View
+                            </button>
+                            <button id="graphPhysicsToggleBtn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                                <i data-lucide="move" class="w-3.5 h-3.5"></i>
+                                <span id="physicsStatusText">Physics: On</span>
+                            </button>
+                            <button onclick="switchTab('sequence-planner')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                                <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+                                View Sequence
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Color Legend -->
+                    <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100 text-xs">
+                        <span class="text-slate-400 font-medium">Node Legend:</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-emerald-100 border-2 border-emerald-600 inline-block"></span>
+                            <span class="text-slate-700 font-medium">Completed</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-indigo-100 border-2 border-indigo-600 inline-block"></span>
+                            <span class="text-slate-700 font-medium">Currently Registered</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-green-50 border-2 border-green-500 inline-block"></span>
+                            <span class="text-slate-700 font-medium">Eligible (Ready to Take)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-rose-100 border-2 border-rose-600 inline-block"></span>
+                            <span class="text-slate-700 font-medium">Locked (Prereq Required)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vis.js Canvas Container & Side Inspector -->
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Graph Canvas (3 Cols) -->
+                    <div class="lg:col-span-3 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden relative" style="height: 540px;">
+                        <div id="visNetworkContainer" class="w-full h-full"></div>
+                        <!-- Canvas Overlay Helper -->
+                        <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] text-slate-500 shadow-sm pointer-events-none">
+                            Tip: Click any course node to view prerequisites & dependents
+                        </div>
+                    </div>
+
+                    <!-- Node Inspector Sidebar (1 Col) -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between" style="min-height: 540px;">
+                        <div id="graphInspectorContent" class="space-y-4">
+                            <div class="border-b border-slate-100 pb-3">
+                                <span class="text-[11px] uppercase tracking-wider font-bold text-slate-400">Node Inspector</span>
+                                <h3 id="inspectorCourseName" class="text-base font-bold text-slate-900 mt-1">Select a course</h3>
+                                <p id="inspectorCourseCode" class="text-xs text-indigo-600 font-mono">Click a node on the canvas</p>
+                            </div>
+                            <div id="inspectorDetails" class="text-xs space-y-3 text-slate-600">
+                                <p class="text-slate-400 italic">No node selected. Click on any course node in the directed graph to inspect in-degrees, out-degrees, and direct prerequisites.</p>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Graph Sandbox CTA -->
+                        <div class="pt-4 border-t border-slate-100">
+                            <button onclick="switchTab('discrete-math')" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i>
+                                <span>Test Cycle Detection</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 5: COURSE SEQUENCE PLANNER ==================== -->
+            <section id="tab-sequence-planner" class="tab-pane hidden space-y-6">
+                <!-- Sequence Header Card -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-semibold border border-indigo-100">
+                                <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+                                Topological Sort (Kahn's Algorithm)
+                            </span>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight mt-1.5">Valid Course Registration Sequence</h2>
+                            <p class="text-xs text-slate-500">
+                                Uses Topological Sorting to guarantee that every course appears only after all of its prerequisites have been fulfilled.
+                            </p>
+                        </div>
+                        <button id="generateSequenceBtn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs md:text-sm font-semibold transition-all shadow-sm flex items-center gap-2 self-start md:self-auto">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            <span>Generate Valid Sequence</span>
+                        </button>
+                    </div>
+
+                    <!-- Academic Note on Parallel Execution / Antichains -->
+                    <div class="mt-3 p-4 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs text-indigo-900 leading-relaxed flex items-start space-x-3">
+                        <i data-lucide="info" class="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold">Partial Ordering & Antichains Principle:</strong>
+                            In Discrete Mathematics, not all courses need to be taken in a single rigid sequence.
+                            For example, once <code class="bg-white px-1.5 py-0.5 rounded text-indigo-700 font-bold border border-indigo-200">C2 Data Structures</code> is completed,
+                            both <code class="bg-white px-1.5 py-0.5 rounded text-indigo-700 font-bold border border-indigo-200">C3 DBMS</code> and
+                            <code class="bg-white px-1.5 py-0.5 rounded text-indigo-700 font-bold border border-indigo-200">C4 Advanced Algorithms</code>
+                            have their prerequisites satisfied. They can be taken concurrently or in either relative order!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sequence Timeline: Parallel Stage View (Level-by-level) -->
+                <div class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="git-commit" class="w-4 h-4 text-indigo-600"></i>
+                            Recommended Stage-by-Stage Curriculum Plan
+                        </h3>
+                        <span class="text-xs text-slate-400">4 Semester Progression</span>
+                    </div>
+
+                    <div id="sequenceTimelineStages" class="space-y-6">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Linear Topological Order (Step-by-step numbered steps) -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-indigo-600"></i>
+                        Linear Total Order (Kahn's In-Degree Reduction)
+                    </h3>
+                    <p class="text-xs text-slate-500">
+                        A strictly linear ordering compatible with the strict partial order relation:
+                    </p>
+                    <div id="sequenceLinearList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 6: MY COURSES ==================== -->
+            <section id="tab-my-courses" class="tab-pane hidden space-y-6">
+                <!-- My Courses Header -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">My Registered & Completed Courses</h2>
+                            <p class="text-xs text-slate-500 mt-1">Review your enrolled subjects, completed grades, and remaining graduation requirements.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="switchTab('graph-visualizer')" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                                <i data-lucide="map" class="w-4 h-4"></i>
+                                View Learning Path
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Subtabs: Registered, Completed, Remaining -->
+                    <div class="flex items-center space-x-2 border-b border-slate-200 pt-2 text-xs">
+                        <button id="myCoursesSubtabRegistered" onclick="switchMyCoursesSubtab('registered')" class="px-4 py-2.5 font-bold text-indigo-600 border-b-2 border-indigo-600 transition-colors flex items-center gap-2">
+                            <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                            <span>Currently Registered</span>
+                            <span id="subtabCountRegistered" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px]">1</span>
+                        </button>
+                        <button id="myCoursesSubtabCompleted" onclick="switchMyCoursesSubtab('completed')" class="px-4 py-2.5 font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            <span>Completed Courses</span>
+                            <span id="subtabCountCompleted" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px]">1</span>
+                        </button>
+                        <button id="myCoursesSubtabRemaining" onclick="switchMyCoursesSubtab('remaining')" class="px-4 py-2.5 font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                            <span>Remaining to Graduate</span>
+                            <span id="subtabCountRemaining" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px]">6</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive Presentation Notice -->
+                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800">
+                    <div class="flex items-center space-x-2.5">
+                        <i data-lucide="sliders" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                        <span>
+                            <strong>Interactive Simulation Tool:</strong>
+                            Use the <span class="font-bold underline">"Mark as Completed"</span> toggle buttons below to simulate passing courses and observe how downstream courses dynamically unlock in the catalog and visualizer!
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Subtab Content Containers -->
+                <div id="myCoursesContentContainer" class="space-y-4">
+                    <!-- Injected dynamically via JS based on active subtab -->
+                </div>
+            </section>
+
+            <!-- ==================== TAB 7: DISCRETE MATH LAB ==================== -->
+            <section id="tab-discrete-math" class="tab-pane hidden space-y-6">
+                <!-- Academic Header Card -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-semibold border border-indigo-100">
+                                <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+                                Discrete Mathematics Theory Engine
+                            </span>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight mt-1.5">Relation Matrices & Poset Analyzer</h2>
+                            <p class="text-xs text-slate-500">
+                                Formally analyzes the course catalog as a mathematical relation $R \subseteq V \times V$, computes the Adjacency Matrix and Warshall's Transitive Closure, and verifies Poset axioms.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Mathematical Properties Verification Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Irreflexive</span>
+                            <p class="text-sm font-extrabold text-emerald-600 mt-1 flex items-center gap-1.5">
+                                <i data-lucide="check" class="w-4 h-4"></i> Verified
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-1">$\forall x \in V, (x, x) \notin R$</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Asymmetric</span>
+                            <p class="text-sm font-extrabold text-emerald-600 mt-1 flex items-center gap-1.5">
+                                <i data-lucide="check" class="w-4 h-4"></i> Verified
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-1">$(u, v) \in R \implies (v, u) \notin R$</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Transitivity</span>
+                            <p class="text-sm font-extrabold text-indigo-600 mt-1 flex items-center gap-1.5">
+                                <i data-lucide="check" class="w-4 h-4"></i> Closed via Warshall
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-1">$u \prec v \land v \prec w \implies u \prec w$</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Acyclic (DAG)</span>
+                            <p class="text-sm font-extrabold text-emerald-600 mt-1 flex items-center gap-1.5">
+                                <i data-lucide="check" class="w-4 h-4"></i> Zero Cycles
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-1">Topological sort valid</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cycle Detection Sandbox Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 md:p-8 shadow-sm space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Prerequisite Cycle Prevention Sandbox</h3>
+                            <p class="text-xs text-slate-300">Test how the discrete math engine detects and rejects circular dependencies (e.g. $C4 \to C1$)</p>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Edge Injector Form -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                        <div>
+                            <label class="text-xs text-slate-300 block mb-1">Source Course (New Prereq):</label>
+                            <select id="cycleSourceSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-amber-400">
+                                <option value="C4">C4 — Advanced Algorithms</option>
+                                <option value="C3">C3 — DBMS</option>
+                                <option value="C2">C2 — Data Structures</option>
+                                <option value="C1">C1 — C Programming</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-300 block mb-1">Target Course (Dependent):</label>
+                            <select id="cycleTargetSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-amber-400">
+                                <option value="C1">C1 — C Programming (Forms Cycle!)</option>
+                                <option value="C2">C2 — Data Structures</option>
+                                <option value="C3">C3 — DBMS</option>
+                                <option value="C4">C4 — Advanced Algorithms</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="testCycleBtn" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                Simulate Proposed Dependency
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cycle Test Output Box -->
+                    <div id="cycleSimulationAlert" class="hidden p-4 rounded-xl text-xs leading-relaxed transition-all">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Adjacency Matrix & Reachability Matrix Side-by-Side -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Adjacency Matrix -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="grid" class="w-4 h-4 text-indigo-600"></i>
+                                Adjacency Matrix $A$ ($u \to v$)
+                            </h3>
+                            <span class="text-[11px] text-slate-400 font-mono">Direct Edges</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Entry $A[i][j] = 1$ if course $i$ is an immediate prerequisite for course $j$.
+                        </p>
+                        <div id="adjacencyMatrixContainer" class="overflow-x-auto pt-2">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Reachability Matrix (Warshall's Algorithm) -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i>
+                                Reachability Matrix $R$ (Warshall's Closure)
+                            </h3>
+                            <span class="text-[11px] text-slate-400 font-mono">Transitive Closure</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Entry $R[i][j] = 1$ if there is any directed path from course $i$ to course $j$.
+                        </p>
+                        <div id="reachabilityMatrixContainer" class="overflow-x-auto pt-2">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Degree Summary Table (In-degree & Out-degree) -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="table" class="w-4 h-4 text-indigo-600"></i>
+                        Node Degree Analysis & Classification
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase">
+                                <tr>
+                                    <th class="px-4 py-3">Course Code</th>
+                                    <th class="px-4 py-3">Course Name</th>
+                                    <th class="px-4 py-3">In-Degree (Prerequisites)</th>
+                                    <th class="px-4 py-3">Out-Degree (Dependents)</th>
+                                    <th class="px-4 py-3">Graph Role</th>
+                                </tr>
+                            </thead>
+                            <tbody id="degreeTableBody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TAB 8: STUDENT PROFILE ==================== -->
+            <section id="tab-student-profile" class="tab-pane hidden space-y-6">
+                <div class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-slate-100">
+                        <img id="profileAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80" alt="Avatar" class="w-20 h-20 rounded-2xl object-cover ring-4 ring-indigo-50 shadow-md">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2 id="profileName" class="text-xl font-bold text-slate-900">Prataparao Dhanush</h2>
+                                <span id="profileRoleBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100">Sophomore</span>
+                            </div>
+                            <p id="profileRollDegree" class="text-xs text-slate-500 font-mono mt-1">CS24B042 • B.Tech in Computer Science</p>
+                            <p id="profileEmail" class="text-xs text-slate-400 mt-0.5">prataparao.dhanush@college.edu</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-xs text-slate-400 font-medium">Cumulative GPA (CGPA)</span>
+                            <p id="profileCGPA" class="text-2xl font-extrabold text-slate-900 mt-1">3.84 / 4.0</p>
+                            <p class="text-[11px] text-emerald-600 font-medium mt-1">Excellent Standing</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-xs text-slate-400 font-medium">Current Semester</span>
+                            <p id="profileSemester" class="text-2xl font-extrabold text-slate-900 mt-1">Semester 3</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Fall Academic Term</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <span class="text-xs text-slate-400 font-medium">Earned Credits</span>
+                            <p id="profileCreditsEarned" class="text-2xl font-extrabold text-indigo-600 mt-1">4 / 28</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Degree Requirement</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Course Details Modal -->
+    <div id="courseDetailsModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span id="modalCourseCode" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">C2</span>
+                        <span id="modalCourseCredits" class="text-xs text-slate-500 font-medium">4 Credits</span>
+                        <span id="modalCourseStatusBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Eligible</span>
+                    </div>
+                    <h3 id="modalCourseName" class="text-lg font-bold text-slate-900 mt-1.5">Data Structures</h3>
+                    <p id="modalCourseDept" class="text-xs text-slate-500">Department of Computer Science & Engineering</p>
+                </div>
+                <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto text-xs">
+                <!-- Description -->
+                <div>
+                    <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Description</h4>
+                    <p id="modalCourseDesc" class="text-slate-600 mt-1 leading-relaxed">
+                        Course description text...
+                    </p>
+                </div>
+
+                <!-- Instructor & Details -->
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Instructor</span>
+                        <span id="modalCourseInstructor" class="font-bold text-slate-800">Prof. Meera Kulkarni</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Category</span>
+                        <span id="modalCourseCategory" class="font-bold text-slate-800">Core Computer Science</span>
+                    </div>
+                </div>
+
+                <!-- Key Topics -->
+                <div>
+                    <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Syllabus & Core Topics</h4>
+                    <ul id="modalCourseTopics" class="mt-2 space-y-1.5 text-slate-600 list-disc list-inside">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+
+                <!-- Prerequisites Breakdown -->
+                <div>
+                    <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Prerequisite Status</h4>
+                    <div id="modalPrereqList" class="mt-2 space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <button onclick="closeCourseModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-semibold transition-colors">
+                    Close
+                </button>
+                <div id="modalFooterActions">
+                    <!-- Injected Register/Drop button based on status -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Confirmation Dialog -->
+    <div id="registrationConfirmModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center">
+                <i data-lucide="help-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Confirm Course Registration</h3>
+                <p id="confirmModalText" class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Are you sure you want to register for this course? All prerequisite requirements have been validated.
+                </p>
+            </div>
+            <div class="flex items-center justify-center space-x-3 pt-2">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors">
+                    Cancel
+                </button>
+                <button id="executeRegistrationBtn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                    Confirm Registration
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 max-w-sm pointer-events-none"></div>
+
+    <!-- Custom Scripts -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
